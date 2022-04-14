@@ -1,5 +1,4 @@
-// reghist
-#include "../../lib/constantes.h"
+#include "../../lib/mainheader.h"
 
 /**** Variável execução processo REGHIST ****/
 

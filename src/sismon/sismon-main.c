@@ -1,5 +1,4 @@
-// sismon
-#include "../../lib/constantes.h"
+#include "../../lib/mainheader.h"
 
 int Tmax=TMAX,Tmin=TMIN,Hmax=HMAX,Hmin=HMIN; // Define os limites dos alarmes
 

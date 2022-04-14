@@ -1,4 +1,4 @@
-#include "../../lib/constantes.h"
+#include "../../lib/mainheader.h"
 
 void cmd_cth (int, char** );
 void cmd_cp (int, char** );
@@ -569,14 +569,27 @@ void cmd_sos (int argc, char **argv)
 {
   int i;
 
-  printf("%s\n", titleMSG);
-  for (i=0; i<NCOMMANDS; i++)
-    printf("%s %s\n", commands[i].cmd_name, commands[i].cmd_help);
+	if(argc == 1){
+		printf("%s\n", titleMSG);
+		for (i=0; i<NCOMMANDS; i++)
+			printf("%s %s\n", commands[i].cmd_name, commands[i].cmd_help);
+	}
+	else {
+		printf("> Muitos argumentos\n");
+	}
+
+
+  
 }
 
 /***********************************************************************/
 
 void cmd_sair (int argc, char **argv)
 {
-    exeIntuti = !exeIntuti;
+	if(argc == 1){
+    	exeIntuti = !exeIntuti;
+	}
+	else {
+		printf("> Muitos argumentos\n");
+	}
 }
