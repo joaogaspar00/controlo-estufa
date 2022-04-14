@@ -1,1 +1,1 @@
-Os comandos cth, cp, mps, mpa, cala, dala, tsm, sos e sair funcionam corretamente. Os comandos aj, fj, lr e dr não funcionam corretamente devido a um problema nos semáforos. 
+### How to run the program
