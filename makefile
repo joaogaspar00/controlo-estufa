@@ -17,7 +17,8 @@ reghist:
 rmexe:
 	rm -f bin/*
 rmsockets:
-	rm /tmp/INTUTI
 	rm /tmp/SISMON
+	rm /tmp/INTUTIR
+	rm /tmp/INTUTIS
 	rm /tmp/REGS
 

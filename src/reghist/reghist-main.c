@@ -15,44 +15,58 @@ extern socklen_t from_intutilenr;
 void closeSocketComunication(int sd, char file[]);
 void iniSocketServer (int *sd, char file[]);
 
+void openQueues(int *queueId,char file[]);
+
 /**** Variáveis das QUEUES ****/
 
 int mqids;
 
-/******************/
-
-reg_t registos[3];
-
 /**********************************************************/
 
 void *comunSismon(){
-    int i;
+    reg_t registos;
+    
+    char *pa;
+    char MSG[MAX_LINE];
+
+    int mfd;
+
+    if ((mfd=open(DADOS, O_RDWR|O_CREAT, 0666 )) < 0) {  /* abrir / criar ficheiro */
+        perror("Erro a criar ficheiro");
+        exit(-1);
+    }
+    else {
+        if (ftruncate(mfd, MAX_LINE) < 0) {            /* definir tamanho do ficheiro */
+            perror("Erro no ftruncate");
+            exit(-1);
+        }
+    }
+    
+    /* mapear ficheiro */
+    if ((pa=mmap(NULL,MAX_LINE, PROT_READ|PROT_WRITE, MAP_SHARED, mfd, 0)) < (char *)0) {
+        perror("Erro em mmap");
+        exit(-1);
+    }
 
     while(exeReghist){
-        if (mq_receive(mqids, (char *)&registos, sizeof(registos), NULL) < 0) {
+        if (mq_receive(mqids, (char *)&registos, sizeof(reg_t), NULL) < 0) {
             perror("REGHIST: erro a receber mensagem");
         }
         
-        for(i=0;i<NS;i++){
-            printf("Temperatura=%d e Humidade=%d do setor:%d\n",registos[i].t ,registos[i].h ,registos[i].s);
-        }
+        printf("Temperatura=%d e Humidade=%d do setor:%d\n",registos.t ,registos.h ,registos.s);
+
+        sprintf(MSG,"Temperatura=%d e Humidade=%d do setor:%d\n",registos.t ,registos.h ,registos.s);
+
+        
+       /* aceder ao ficheiro através da memória */
+        strncpy(pa,"MSG de teste\n",strlen("MSG de teste\n"));
+        strncpy(pa + strlen("MSG de teste\n"),"MSG de teste777\n",strlen("MSG de teste777\n"));
     }
+
+    munmap(pa,MAX_LINE);
+    close(mfd);
 
     return 0;
-}
-
-/**********************************************************/
-
-void openQueues(){
-    struct mq_attr ma;
-
-    ma.mq_flags = 0;
-    ma.mq_maxmsg = 2;
-    ma.mq_msgsize = sizeof(registos);
-
-    if ((mqids=mq_open(REGQ, O_RDWR|O_CREAT, 0666, &ma)) < 0) {
-        perror("REGHIST: Erro a criar queue servidor");
-    }
 }
 
 /**********************************************************/
@@ -84,7 +98,7 @@ int main (void){
         exit(-1);
     }
 
-    openQueues();
+    openQueues(&mqids,REGQ);
 
     while(exeReghist){
         from_intutilenr = sizeof(from_intutir);

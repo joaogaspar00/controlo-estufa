@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <mqueue.h>
+#include <sys/mman.h>
 
 /*********************************************
 *                   HEADERS

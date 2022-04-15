@@ -11,7 +11,6 @@ setorSTATUS setor[3] = {
                         };
 
 reg_t registos[3];
-//={{,0,TINI,HINI},{,1,TINI,HINI},{,2,TINI,HINI}};
 
 /**** Variáveis das SOCKETS ****/
 
@@ -23,6 +22,7 @@ extern socklen_t from_intutilen;
 
 void closeSocketComunication(int sd, char file[]);
 void iniSocketServer (int *sd, char file[]);
+void openQueues(int *queueId,char file[]);
 void warnings(int nSetor);
 
 /**** Semáforos ****/
@@ -123,29 +123,29 @@ void *processoSensor(void * pnSetor){
     struct tm tm;
     char str[26];*/
 
-    reghist_info.t = registos[nSetor].t;
-    reghist_info.h = registos[nSetor].h;
+        /* time(&t);
+    localtime_r(&t, &tm);
+    asctime_r(&tm, &str[0]);
+    strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S\n", &tm);*/
     
     while(exeSismon){
-        registos[nSetor].t=setor[nSetor].temperature;
+        reghist_info.t = registos[nSetor].t;  
+        reghist_info.h = registos[nSetor].h;
+
+        registos[nSetor].t=setor[nSetor].temperature; 
         registos[nSetor].h=setor[nSetor].humidity;
         registos[nSetor].s=nSetor+1;
-
-       /* time(&t);
-        localtime_r(&t, &tm);
-        asctime_r(&tm, &str[0]);
-        strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S\n", &tm);*/
  
-        printf("Temperatura=%d e Humidade=%d do setor:%d\n",registos[nSetor].t ,registos[nSetor].h ,registos[nSetor].s);
+        printf("Temperatura=%d e Humidade=%d do setor:%d\n",registos[nSetor].t ,registos[nSetor].h ,registos[nSetor].s);    
 
         if(reghistOpen){
-            if((registos[nSetor].t != reghist_info.t) || (registos[nSetor].h != reghist_info.h)){
+            if((registos[nSetor].t != reghist_info.t) || (registos[nSetor].h != reghist_info.h)){  
 
                 if ((mqids=mq_open(REGQ, O_RDWR)) < 0) {
                     perror("SISMON: Erro a associar a queue REGHIST (iniciar Reghist)");
                 }
                 
-                if (mq_send(mqids, (char *)&registos, sizeof(registos), 0) < 0) {
+                if (mq_send(mqids, (char *)&registos[nSetor], sizeof(reg_t), 0) < 0) {
                     perror("SISMON: erro a enviar mensagem");
                 }
             }
@@ -159,18 +159,8 @@ void *processoSensor(void * pnSetor){
 }
 
 /**********************************************************/
-void openQueues(){
-    struct mq_attr ma;
 
-    ma.mq_flags = 0;
-    ma.mq_maxmsg = 2;
-    ma.mq_msgsize = sizeof(registos);
 
-     if ((mqidc=mq_open(SISM, O_RDWR|O_CREAT, 0666, &ma)) < 0) {
-        perror("SISMON: Erro a criar queue");
-    }
-
-}
 
 /**********************************************************/
 
@@ -538,8 +528,8 @@ int main (void){
         }
     }
     
-    iniSocketServer(&sd_sismon, SISMON);    // inicializa a socket para comunicação entre sismon e intuti
-    openQueues();                           // Cria a queue do lado do Sismon
+    iniSocketServer(&sd_sismon, SISMON);                // inicializa a socket para comunicação entre sismon e intuti
+    openQueues(&mqidc,SISM);                           // Cria a queue do lado do Sismon
 
     while(exeSismon){
         from_intutilen = sizeof(from_intuti);
