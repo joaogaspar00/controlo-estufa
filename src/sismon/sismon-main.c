@@ -118,15 +118,6 @@ void *processoAtuador(void * pnSetor){
 void *processoSensor(void * pnSetor){	
     int nSetor = *(int *)pnSetor;
     reg_t reghist_info;            //guarda o valor anterior da memoria local para saber se envia para o reghist
-
-    /*time_t t;
-    struct tm tm;
-    char str[26];*/
-
-        /* time(&t);
-    localtime_r(&t, &tm);
-    asctime_r(&tm, &str[0]);
-    strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S\n", &tm);*/
     
     while(exeSismon){
         reghist_info.t = registos[nSetor].t;  
@@ -135,7 +126,9 @@ void *processoSensor(void * pnSetor){
         registos[nSetor].t=setor[nSetor].temperature; 
         registos[nSetor].h=setor[nSetor].humidity;
         registos[nSetor].s=nSetor+1;
- 
+
+        clock_gettime(CLOCK_REALTIME, &registos[nSetor].temp);
+
         printf("Temperatura=%d e Humidade=%d do setor:%d\n",registos[nSetor].t ,registos[nSetor].h ,registos[nSetor].s);    
 
         if(reghistOpen){
@@ -157,10 +150,6 @@ void *processoSensor(void * pnSetor){
     }
     return 0;
 }
-
-/**********************************************************/
-
-
 
 /**********************************************************/
 
