@@ -32,8 +32,6 @@ void saveToFile(char *pa, char MSG[]){
     numRegist++;
 }
 
-
-
 /**********************************************************/
 
 void *comunSismon(){
@@ -72,7 +70,6 @@ void *comunSismon(){
         }
 
         localtime_r(&registos.temp.tv_sec, &tm);  
-        //asctime_r(&tm, &str[0]);
 
         strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S", &tm);
 
@@ -131,9 +128,7 @@ int main (void){
 
     closeSocketComunication(sd_reghist, REGS);
            
-    if (mq_unlink(REGQ) < 0) {
-        perror("REGHIST: Erro a eliminar queue servidor (REGHIST)");
-    }
-
+    closeQueue(REGQ);
+    
     return 0;
 }
