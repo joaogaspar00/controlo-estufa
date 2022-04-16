@@ -32,6 +32,8 @@ void saveToFile(char *pa, char MSG[]){
     numRegist++;
 }
 
+
+
 /**********************************************************/
 
 void *comunSismon(){
