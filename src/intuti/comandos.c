@@ -29,7 +29,7 @@ const CMD commands[] = {
 	{cmd_mps, "mps"," <s> <p>  		modificar periodo proc.sensor do setor s (0-todos) (segundos)"},
 	{cmd_mpa, "mpa"," <s> <p> 		modificar periodo proc.ambiente do setor s (0-todos) (segundos)"},
 	{cmd_cala, "cala","  			consultar limiares alarme temperatura/humidade (minimos e maximos)"},
-	{cmd_dala, "dala"," <t> <T> <h> <H>  definir limiares temperatura/humidade, min (t,h) e max (T,H)"},
+	{cmd_dala, "dala"," <t> <T> <h> <H>   definir limiares temperatura/humidade, min (t,h) e max (T,H)"},
 	{cmd_cer, "cer","  			consultar estado envio de registos para o historico"},
 	{cmd_aer, "aer","  			ativar o envio de registos para o histórico"},
 	{cmd_der, "der","  			desativar o envio de registos para o histórico"},
@@ -577,9 +577,6 @@ void cmd_sos (int argc, char **argv)
 	else {
 		printf("> Muitos argumentos\n");
 	}
-
-
-  
 }
 
 /***********************************************************************/

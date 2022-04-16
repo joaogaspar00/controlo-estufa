@@ -21,11 +21,24 @@ void openQueues(int *queueId,char file[]);
 
 int mqids;
 
+int numRegist=0;
+
+/**********************************************************/
+
+void saveToFile(char *pa, char MSG[]){
+    printf("%s", MSG);
+    /* aceder ao ficheiro através da memória */
+    strncpy(pa+numRegist*strlen(MSG),MSG,strlen(MSG));
+    numRegist++;
+}
+
 /**********************************************************/
 
 void *comunSismon(){
     reg_t registos;
+    struct tm tm;
     
+    char str[26];
     char *pa;
     char MSG[MAX_LINE];
 
@@ -36,32 +49,36 @@ void *comunSismon(){
         exit(-1);
     }
     else {
-        if (ftruncate(mfd, MAX_LINE) < 0) {            /* definir tamanho do ficheiro */
+        if (ftruncate(mfd, MAX_LINE*NREG) < 0) {            /* definir tamanho do ficheiro */
             perror("Erro no ftruncate");
             exit(-1);
         }
     }
     
     /* mapear ficheiro */
-    if ((pa=mmap(NULL,MAX_LINE, PROT_READ|PROT_WRITE, MAP_SHARED, mfd, 0)) < (char *)0) {
+    if ((pa=mmap(NULL,MAX_LINE*NREG, PROT_READ|PROT_WRITE, MAP_SHARED, mfd, 0)) < (char *)0) {
         perror("Erro em mmap");
         exit(-1);
     }
+
+    int i;
+    for(i=0; i<strlen(pa); i++) pa[i] = '\0';
 
     while(exeReghist){
         if (mq_receive(mqids, (char *)&registos, sizeof(reg_t), NULL) < 0) {
             perror("REGHIST: erro a receber mensagem");
         }
-        
-        printf("Temperatura=%d e Humidade=%d do setor:%d\n",registos.t ,registos.h ,registos.s);
 
-        sprintf(MSG,"Temperatura=%d e Humidade=%d do setor:%d\n",registos.t ,registos.h ,registos.s);
+        localtime_r(&registos.temp.tv_sec, &tm);  
+        //asctime_r(&tm, &str[0]);
 
-        
-       /* aceder ao ficheiro através da memória */
-        strncpy(pa,"MSG de teste\n",strlen("MSG de teste\n"));
-        strncpy(pa + strlen("MSG de teste\n"),"MSG de teste777\n",strlen("MSG de teste777\n"));
+        strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S", &tm);
+
+        sprintf(MSG,"%s Temperatura=%d e Humidade=%d do setor:%d\n",str, registos.t ,registos.h ,registos.s);
+        saveToFile(pa, MSG);
+  
     }
+
 
     munmap(pa,MAX_LINE);
     close(mfd);
