@@ -8,7 +8,8 @@ void openQueues(int *queueId,char file[]){
     ma.mq_msgsize = sizeof(reg_t);
 
      if ((*queueId=mq_open(file, O_RDWR|O_CREAT, 0666, &ma)) < 0) {
-        perror("SISMON: Erro a criar queue");
+        printf("%s: ",file); 
+        perror("Erro a criar queue");
     }
 }
 
