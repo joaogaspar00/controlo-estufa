@@ -23,7 +23,20 @@ extern socklen_t from_intutilen;
 void closeSocketComunication(int sd, char file[]);
 void iniSocketServer (int *sd, char file[]);
 void openQueues(int *queueId,char file[]);
-void warnings(int nSetor);
+void closeQueue(char file[]);
+
+void temphumRequest(int nSetor);
+void consultParameters(int nSetor);
+void openWindows(int order,int nSetor);
+void closeWindows(int order,int nSetor);
+void turnOnWater(int order,int nSetor);
+void turnOffWater(int order,int nSetor);
+void modifySensorPer(int nSetor,int Periodo);
+void modifySensorAmb(int nSetor,int Periodo);
+void consultLimits();
+void defineLimits(int t,int T,int h,int H);
+void consultReghistStatus();
+void changeReghistStatus(int order);
 
 /**** Semáforos ****/
 
@@ -31,7 +44,7 @@ sem_t actuatorSem[NS];
 
 /**** Variáveis das QUEUES ****/
 
-int mqids, mqidc;
+int mqidc;
 
 /*****************************/
 
@@ -41,132 +54,12 @@ int actuatorOrder[NS];      // Indica o comando do intuti ao processo atuador
 
 bool reghistOpen = false;    //indica se a opcao de envio para o reghist esta ativa (inicialmente nao esta ativa)
 
-/**********************************************************
-                    PROCESSO AMBIENTE
-**********************************************************/
 
-void *processoAmbiente(void * pnSetor){		
-    int deltaT=0, deltaH=0;
-    int countEnviCycles=1, alt=1;
-    
-    int nSetor = *(int *)pnSetor; //Identificador do setor
-    
-    while(exeSismon){
-        deltaT = (rand() % 3) - 1; 
-        deltaH = (rand() % 3) - 1;
-        if(countEnviCycles == NCICL){  
-            deltaT+=alt;
-            deltaH+=alt;
-            countEnviCycles=1;
-            alt*=-1;
-        }
-        else{
-            deltaT+=alt;
-            deltaH+=alt;
-            countEnviCycles++;
-        }
-        deltaT+=setor[nSetor].windowStatus;
-        deltaH+=setor[nSetor].waterStatus;
-        setor[nSetor].temperature+=deltaT;
-        setor[nSetor].humidity+=deltaH;
+/**** Threads ****/
 
-        printf("> Atualizacao dos valores de temperatura e humidade\n");
-
-        sleep(setor[nSetor].environmentPeriod);
-    }   
-    return 0;
-}
-
-/**********************************************************
-                    PROCESSO ATUADOR
-**********************************************************/
-
-void *processoAtuador(void * pnSetor){	
-    int nSetor = *(int *)pnSetor;
-	
-    while(exeSismon){
-        sem_wait(&actuatorSem[nSetor]);
-        switch (actuatorOrder[nSetor]){
-            case AJ:
-                setor[nSetor].windowStatus = OPEN;
-                actuatorOrder[nSetor]=0;        // Desta forma só entra no switch quando o intuti der outra vez a ordem
-                break;
-            case FJ:
-                setor[nSetor].windowStatus = CLOSE;
-                actuatorOrder[nSetor]=0; 
-                break;
-            case LR:
-                setor[nSetor].waterStatus = ON;
-                actuatorOrder[nSetor]=0; 
-                break;
-            case DR:
-                setor[nSetor].waterStatus = OFF;
-                actuatorOrder[nSetor]=0; 
-                break;
-            default:
-                break;
-        }
-    }
-
-    return 0;
-}
-
-/**********************************************************
-                    PROCESSO SENSOR                                   
-**********************************************************/           
-
-void *processoSensor(void * pnSetor){	
-    int nSetor = *(int *)pnSetor;
-    reg_t reghist_info;            //guarda o valor anterior da memoria local para saber se envia para o reghist
-    
-    while(exeSismon){
-        reghist_info.t = registos[nSetor].t;  
-        reghist_info.h = registos[nSetor].h;
-
-        registos[nSetor].t=setor[nSetor].temperature; 
-        registos[nSetor].h=setor[nSetor].humidity;
-        registos[nSetor].s=nSetor+1;
-
-        clock_gettime(CLOCK_REALTIME, &registos[nSetor].temp);
-
-        printf("Temperatura=%d e Humidade=%d do setor:%d\n",registos[nSetor].t ,registos[nSetor].h ,registos[nSetor].s);    
-
-        if(reghistOpen){
-            if((registos[nSetor].t != reghist_info.t) || (registos[nSetor].h != reghist_info.h)){  
-
-                if ((mqids=mq_open(REGQ, O_RDWR)) < 0) {
-                    perror("SISMON: Erro a associar a queue REGHIST (iniciar Reghist)");
-                }
-                
-                if (mq_send(mqids, (char *)&registos[nSetor], sizeof(reg_t), 0) < 0) {
-                    perror("SISMON: erro a enviar mensagem");
-                }
-            }
-        }
-
-        warnings(nSetor);
-    
-        sleep(setor[nSetor].sensorPeriod);
-    }
-    return 0;
-}
-
-/**********************************************************/
-
-void warnings(int nSetor){
-    if(setor[nSetor].temperature>=Tmax){
-        printf("O setor %d atingiu a temperatura maxima (%d)\n",nSetor+1,Tmax);
-    }
-    else if(setor[nSetor].temperature<=Tmin){
-        printf("O setor %d atingiu a temperatura minima (%d)\n",nSetor+1,Tmin);
-    }
-    else if(setor[nSetor].humidity>=Hmax){
-        printf("O setor %d atingiu a humidade maxima (%d)\n",nSetor+1,Hmax);
-    }
-    else if(setor[nSetor].humidity<=Hmin){
-        printf("O setor %d atingiu a humidade minima (%d)\n",nSetor+1,Hmin);
-    }
-}
+void *processoAmbiente(void * pnSetor);
+void *processoAtuador(void * pnSetor);
+void *processoSensor(void * pnSetor);
 
 /**********************************************************/
 
@@ -178,254 +71,6 @@ void initialSemaphores(){
             perror("Erro na inicializacao dos semaforos\n");
         }   
     }
-}
-
-/**********************************************************/
-void temphumRequest(int nSetor){        //cth
-    char MSG[MAX_LINE];
-
-    if (nSetor==0){     // Se o argumento for 0 teremos que consultar todos os setores e enviar para o intuti
-        sprintf(MSG,">Setor 1 -> Temp=%d e Hum=%d \n>Setor 2 -> Temp=%d e Hum=%d \n>Setor 3 -> Temp=%d e Hum=%d \n",
-                registos[0].t,registos[0].h,registos[1].t,registos[2].h,registos[2].t,registos[2].h);
-    }
-    else{
-        sprintf(MSG,">Setor %d -> Temp=%d e Hum=%d \n",nSetor,registos[nSetor-1].t,registos[nSetor-1].h);
-    }
-
-    if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
-		perror("Erro ao enviar para intuti");
-    }
-}
-
-/**********************************************************/
-
-void consultParameters(int nSetor){     //cp
-    char MSG[MAX_LINE];
-
-    if (nSetor==0){     // Se o argumento for 0 teremos que consultar todos os setores e enviar para o intuti
-        sprintf(MSG,">Setor 1 -> Per.Sensor=%d Per.Ambiente=%d e Janela=%d e Rega=%d\n>Setor 2 -> Per.Sensor=%d Per.Ambiente=%d e Janela=%d e Rega=%d\n>Setor 3 -> Per.Sensor=%d Per.Ambiente=%d e Janela=%d e Rega=%d ",
-                setor[0].sensorPeriod,setor[0].environmentPeriod,setor[0].windowStatus,setor[0].waterStatus,
-                setor[1].sensorPeriod,setor[1].environmentPeriod,setor[1].windowStatus,setor[1].waterStatus,
-                setor[2].sensorPeriod,setor[2].environmentPeriod,setor[2].windowStatus,setor[2].waterStatus);
-    }
-    else{
-        sprintf(MSG,">Setor %d -> Per.Sensor=%d Per.Ambiente=%d e Janela=%d e Rega=%d\n",
-                    nSetor,setor[nSetor-1].sensorPeriod,setor[nSetor-1].environmentPeriod,setor[nSetor].windowStatus,setor[nSetor].waterStatus);
-    }
-
-    if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
-		perror("Erro ao enviar para intuti");
-    }
-}
-
-/**********************************************************/
-
-void openWindows(int order,int nSetor){ //aj
-    int i;
-    char MSG[MAX_LINE];	
-    
-    if(nSetor == 0){
-        for(i=0; i<NS; i++){
-            actuatorOrder[i] = order;
-            sem_post(&actuatorSem[i]);
-        }
-        sprintf(MSG,"> As janelas de todos os setores foram abertas\n");
-    }
-    else {
-        actuatorOrder[nSetor-1] = order;
-        sem_post(&actuatorSem[nSetor-1]);
-        sprintf(MSG,"> As janelas do setor %d foram abertas\n",nSetor);
-    }
-
-    if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
-        perror("Erro ao enviar para intuti");
-    }
-}
-
-/**********************************************************/
-
-void closeWindows(int order,int nSetor){ //fj
-    int i;
-    char MSG[MAX_LINE];	
-    
-    if(nSetor == 0){
-        for(i=0; i<NS; i++){
-            actuatorOrder[i] = order;
-            sem_post(&actuatorSem[i]);
-        }
-        sprintf(MSG,"> As janelas de todos os setores foram fechadas\n");
-    }
-    else {
-        actuatorOrder[nSetor-1] = order;
-        sem_post(&actuatorSem[nSetor-1]);
-        sprintf(MSG,"> As janelas do setor %d foram fechadas\n",nSetor);
-    }
-    
-    if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
-        perror("Erro ao enviar para intuti");
-    }
-}
-
-/**********************************************************/
-
-void turnOnWater(int order,int nSetor){ //lr
-    int i;
-    char MSG[MAX_LINE];	
-    
-    if(nSetor == 0){
-        for(i=0; i<NS; i++){
-            actuatorOrder[i] = order;
-            sem_post(&actuatorSem[i]);
-        }
-        sprintf(MSG,"> A rega de todos os setores foi ligada\n");
-    }
-    else {
-        actuatorOrder[nSetor-1] = order;
-        sem_post(&actuatorSem[nSetor-1]);
-        sprintf(MSG,"> A rega do setor %d foi ligada\n",nSetor);
-    }
-    
-    if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
-        perror("Erro ao enviar para intuti");
-    }
-}
-
-/**********************************************************/
-
-void turnOffWater(int order,int nSetor){ //dr
-    int i;
-    char MSG[MAX_LINE];	
-    
-    if(nSetor == 0){
-        for(i=0; i<NS; i++){
-            actuatorOrder[i] = order;
-            sem_post(&actuatorSem[i]);
-        }
-        sprintf(MSG,"> A rega de todos os setores foi desligada\n");
-    }
-    else {
-        actuatorOrder[nSetor-1] = order;
-        sem_post(&actuatorSem[nSetor-1]);
-        sprintf(MSG,"> A rega do setor %d foi desligada\n",nSetor);
-    }
-    
-    if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
-        perror("Erro ao enviar para intuti");
-    }
-}
-
-/**********************************************************/
-
-void modifySensorPer(int nSetor,int Periodo){   //mps
-    char MSG[MAX_LINE];
-    int i;
-
-    if (nSetor==0){     // Se o argumento for 0 teremos que consultar todos os setores e enviar para o intuti
-        for(i=0;i<NS;i++){
-            setor[i].sensorPeriod=Periodo;
-        }
-        sprintf(MSG,"O periodo sensor de todos os setores foram modificados\n");
-    }
-    else{
-        setor[nSetor-1].sensorPeriod=Periodo; 
-        sprintf(MSG,"O periodo sensor do setor %d foi modificado\n",nSetor);
-    }
-
-    if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
-		perror("Erro ao enviar para intuti");
-    }
-}
-
-/**********************************************************/
-
-void modifySensorAmb(int nSetor,int Periodo){   //mpa
-    char MSG[MAX_LINE];
-    int i;
-
-    if (nSetor==0){     // Se o argumento for 0 teremos que consultar todos os setores e enviar para o intuti
-        for(i=0;i<NS;i++){
-            setor[i].environmentPeriod=Periodo;
-        }
-        sprintf(MSG,"O periodo ambiente de todos os setores foram modificados\n");
-    }
-    else{
-        setor[nSetor-1].environmentPeriod=Periodo; 
-        sprintf(MSG,"O periodo ambiente do setor %d foi modificado\n",nSetor);
-    }
-
-    if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
-		perror("Erro ao enviar para intuti");
-    }
-}
-
-/**********************************************************/
-
-void consultLimits(){       //cala
-    char MSG[MAX_LINE];
-    
-    sprintf(MSG,"Temp.Max=%d Temp.Min=%d Hum.max=%d Hum.Min=%d\n",Tmax,Tmin,Hmax,Hmin);
-
-    if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
-		perror("Erro ao enviar para intuti");
-    }
-}
-
-/**********************************************************/
-void defineLimits(int t,int T,int h,int H){  //dala
-    char MSG[MAX_LINE];
-
-    Tmin=t;
-    Tmax=T;
-    Hmin=h;
-    Hmax=H;
-
-    sprintf(MSG,"Novos limites -> Temp.Max=%d Temp.Min=%d Hum.max=%d Hum.Min=%d\n",Tmax,Tmin,Hmax,Hmin);
-
-    if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
-		perror("Erro ao enviar para intuti");
-    }
-}
-
-/**********************************************************/
-
-void consultReghistStatus(){    //cer
-    char MSG[MAX_LINE];
-
-    if(reghistOpen){
-        sprintf(MSG,"O envio de registos para o historico esta ativado\n");
-    }
-    else{
-        sprintf(MSG,"O envio de registos para o historico esta desativado\n");
-    }
-
-    if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
-		perror("Erro ao enviar para intuti");
-    }
-
-}
-
-/**********************************************************/
-
-void changeReghistStatus(int order){    //aer e der
-    char MSG[MAX_LINE];
-
-    switch (order){
-        case AER:
-            reghistOpen=true;
-            sprintf(MSG,"O envio de registos para o historico foi ativado\n");
-            break;
-        case DER:
-            reghistOpen=false;
-            sprintf(MSG,"O envio de registos para o historico foi desativado\n");
-            break;
-        default:
-            break;
-    }
-
-    if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
-		perror("Erro ao enviar para intuti");
-    }
-
 }
 
 /**********************************************************/
@@ -518,7 +163,7 @@ int main (void){
     }
     
     iniSocketServer(&sd_sismon, SISMON);                // inicializa a socket para comunicação entre sismon e intuti
-    openQueues(&mqidc,SISM);                           // Cria a queue do lado do Sismon
+    openQueues(&mqidc,SISM);                            // Cria a queue do lado do Sismon
 
     while(exeSismon){
         from_intutilen = sizeof(from_intuti);
@@ -533,9 +178,7 @@ int main (void){
 
     closeSocketComunication(sd_sismon, SISMON);     // Fecha a socket
 
-    if (mq_unlink(SISM) < 0) {                      // Fecha a queue
-        perror("SISMON: Erro a eliminar queue cliente (SISMON)");
-    }
+    closeQueue(SISM);   // Fecha a queue
 
     return 0;
 }
