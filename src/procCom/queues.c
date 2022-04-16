@@ -11,3 +11,11 @@ void openQueues(int *queueId,char file[]){
         perror("SISMON: Erro a criar queue");
     }
 }
+
+void closeQueue(char file[]){
+
+    if (mq_unlink(file) < 0) {    
+        printf("%s: ",file);                  
+        perror("Erro a eliminar queue");
+    }
+}
