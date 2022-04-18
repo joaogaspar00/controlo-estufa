@@ -16,6 +16,7 @@ void closeSocketComunication(int sd, char file[]);
 void iniSocketServer (int *sd, char file[]);
 
 void openQueues(int *queueId,char file[]);
+void closeQueue(char file[]);
 
 /**** Variáveis das QUEUES ****/
 
@@ -25,10 +26,12 @@ int numRegist=0;
 
 /**********************************************************/
 
-void saveToFile(char *pa, char MSG[]){
-    printf("%s", MSG);
+void saveToFile(reg_t *pa, reg_t registos){
     /* aceder ao ficheiro através da memória */
-    strncpy(pa+numRegist*strlen(MSG),MSG,strlen(MSG));
+    if(numRegist==NREG){
+        numRegist=0;
+    }
+    pa[numRegist] = registos;
     numRegist++;
 }
 
@@ -36,46 +39,33 @@ void saveToFile(char *pa, char MSG[]){
 
 void *comunSismon(){
     reg_t registos;
-    struct tm tm;
-    
-    char str[26];
-    char *pa;
-    char MSG[MAX_LINE];
-
     int mfd;
+    reg_t *pa;
 
     if ((mfd=open(DADOS, O_RDWR|O_CREAT, 0666 )) < 0) {  /* abrir / criar ficheiro */
         perror("Erro a criar ficheiro");
         exit(-1);
     }
     else {
-        if (ftruncate(mfd, MAX_LINE*NREG) < 0) {            /* definir tamanho do ficheiro */
+        if (ftruncate(mfd, NREG*sizeof(reg_t)) < 0) {            /* definir tamanho do ficheiro */
             perror("Erro no ftruncate");
             exit(-1);
         }
     }
     
     /* mapear ficheiro */
-    if ((pa=mmap(NULL,MAX_LINE*NREG, PROT_READ|PROT_WRITE, MAP_SHARED, mfd, 0)) < (char *)0) {
+    if ((pa=(reg_t *) mmap(NULL,NREG*sizeof(reg_t), PROT_READ|PROT_WRITE, MAP_SHARED, mfd, 0)) < (reg_t *)0) {
         perror("Erro em mmap");
         exit(-1);
     }
 
-    int i;
-    for(i=0; i<strlen(pa); i++) pa[i] = '\0';
-
     while(exeReghist){
-        if (mq_receive(mqids, (char *)&registos, sizeof(reg_t), NULL) < 0) {
+        if (mq_receive(mqids,(char *)&registos, sizeof(reg_t), NULL) < 0) {
             perror("REGHIST: erro a receber mensagem");
         }
 
-        localtime_r(&registos.temp.tv_sec, &tm);  
 
-        strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S", &tm);
-
-        sprintf(MSG,"%s Temperatura=%d e Humidade=%d do setor:%d\n",str, registos.t ,registos.h ,registos.s);
-        saveToFile(pa, MSG);
-  
+        saveToFile(pa, registos);
     }
 
 
@@ -87,10 +77,55 @@ void *comunSismon(){
 
 /**********************************************************/
 
+void readReghists(){
+    int mfd;
+    reg_t registos;
+
+    struct tm tm;
+    char str[26];
+    reg_t *pa;
+    char MSG[MAX_LINE];
+    int i;
+        
+
+    if ((mfd=open(DADOS, O_RDWR, 0666 )) < 0) {  /* abrir ficheiro*/
+        perror("Erro a criar ficheiro");
+        exit(-1);
+    }
+    else {
+        if (ftruncate(mfd, MAX_LINE*NREG) < 0) {          
+            perror("Erro no ftruncate");
+            exit(-1);
+        }
+    }
+
+    if ((pa=(reg_t *) mmap(NULL,NREG*sizeof(reg_t), PROT_READ|PROT_WRITE, MAP_SHARED, mfd, 0)) < (reg_t *)0) {
+        perror("Erro em mmap");
+        exit(-1);
+    }
+
+    for(i=0;i<NREG;i++){
+        registos=pa[i];
+        
+        localtime_r(&registos.temp.tv_sec, &tm);  
+        strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S", &tm);
+        sprintf(MSG,"%s ->Temperatura=%d e Humidade=%d do setor:%d\n",str,registos.t ,registos.h ,registos.s);
+        printf("%s",MSG);
+    }
+
+    munmap(pa,MAX_LINE);
+    close(mfd);
+
+
+}
+
+/**********************************************************/
+
 void execRequestINTUTI(int execFunction, int vArguments[]){
     switch(execFunction){
         case LREG:
             printf("Listar registos\n");
+            readReghists();
             break;  
         case TRH:
             exeReghist = !exeReghist;

@@ -61,7 +61,7 @@ void *processoSensor(void * pnSetor){
                     perror("SISMON: Erro a associar a queue REGHIST (iniciar Reghist)");
                 }
                 
-                if (mq_send(mqids, (char *)&registos[nSetor], sizeof(reg_t), 0) < 0) {
+                if (mq_send(mqids,(char *)&registos[nSetor], sizeof(reg_t), 0) < 0) {
                     perror("SISMON: erro a enviar mensagem");
                 }
             }

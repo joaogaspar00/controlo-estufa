@@ -542,7 +542,18 @@ void cmd_tsm (int argc, char** argv)
 
 void cmd_lreg (int argc, char** argv)
 {
-	printf ("15");
+	OBJECT_COMUN objectTo_reghist;
+
+	if(argc == 1){
+		objectTo_reghist = creatComunicationObject(LREG, argc, argv);
+		printf("> Listar registos\n");
+		if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0) {
+			perror("Erro ao enviar para reghist");
+		}
+	}
+	else {
+		printf("> Muitos argumentos\n");
+	}
 }
 
 /***********************************************************************/
