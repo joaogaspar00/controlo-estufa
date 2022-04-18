@@ -140,6 +140,12 @@ void execRequestINTUTI(int execFunction, int vArguments[]){
 
 /*********************************************************/
 
+void sighand(){
+    exeSismon = !exeSismon;
+}
+
+/*********************************************************/
+
 int main (void){
     OBJECT_COMUN object_sismon;        // Estutura que serve para a comunicação entre Intuti e Sismon
 
@@ -164,6 +170,8 @@ int main (void){
     
     iniSocketServer(&sd_sismon, SISMON);                // inicializa a socket para comunicação entre sismon e intuti
     openQueues(&mqidc,SISM);                            // Cria a queue do lado do Sismon
+
+    signal(SIGTERM, sighand);
 
     while(exeSismon){
         from_intutilen = sizeof(from_intuti);
