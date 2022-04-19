@@ -8,10 +8,6 @@ extern reg_t registos[3];
 
 extern bool exeSismon;
 
-/**** Variáveis das QUEUES ****/
-
-extern int mqidc;
-
 /*****************************/
 
 extern bool reghistOpen;    //indica se a opcao de envio para o reghist esta ativa (inicialmente nao esta ativa)
@@ -40,7 +36,7 @@ void warnings(int nSetor){
 void *processoSensor(void * pnSetor){	
     int nSetor = *(int *)pnSetor;
     reg_t reghist_info;            //guarda o valor anterior da memoria local para saber se envia para o reghist
-    int mqids;
+    int queueId;
     
     while(exeSismon){
         reghist_info.t = registos[nSetor].t;  
@@ -57,11 +53,11 @@ void *processoSensor(void * pnSetor){
         if(reghistOpen){
             if((registos[nSetor].t != reghist_info.t) || (registos[nSetor].h != reghist_info.h)){  
 
-                if ((mqids=mq_open(REGQ, O_RDWR)) < 0) {
+                if ((queueId=mq_open(REGQ, O_RDWR)) < 0) {
                     perror("SISMON: Erro a associar a queue REGHIST (iniciar Reghist)");
                 }
                 
-                if (mq_send(mqids,(char *)&registos[nSetor], sizeof(reg_t), 0) < 0) {
+                if (mq_send(queueId,(char *)&registos[nSetor], sizeof(reg_t), 0) < 0) {
                     perror("SISMON: erro a enviar mensagem");
                 }
             }
