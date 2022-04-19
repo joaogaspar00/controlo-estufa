@@ -42,10 +42,6 @@ void changeReghistStatus(int order);
 
 sem_t actuatorSem[NS];
 
-/**** Variáveis das QUEUES ****/
-
-int mqidc;
-
 /*****************************/
 
 int actuatorOrder[NS];      // Indica o comando do intuti ao processo atuador
@@ -169,7 +165,6 @@ int main (void){
     }
     
     iniSocketServer(&sd_sismon, SISMON);                // inicializa a socket para comunicação entre sismon e intuti
-    openQueues(&mqidc,SISM);                            // Cria a queue do lado do Sismon
 
     signal(SIGTERM, sighand);
 
@@ -185,8 +180,6 @@ int main (void){
     }
 
     closeSocketComunication(sd_sismon, SISMON);     // Fecha a socket
-
-    closeQueue(SISM);   // Fecha a queue
 
     return 0;
 }

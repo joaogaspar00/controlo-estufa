@@ -236,10 +236,10 @@ void consultReghistStatus(){    //cer
     char MSG[MAX_LINE];
 
     if(reghistOpen){
-        sprintf(MSG,"O envio de registos para o historico esta ativado\n");
+        sprintf(MSG,"O envio de registos para o historico esta ativo\n");
     }
     else{
-        sprintf(MSG,"O envio de registos para o historico esta desativado\n");
+        sprintf(MSG,"O envio de registos para o historico esta desativo\n");
     }
 
     if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
