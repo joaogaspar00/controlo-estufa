@@ -37,6 +37,7 @@ void *processoSensor(void * pnSetor){
     int nSetor = *(int *)pnSetor;
     reg_t reghist_info;            //guarda o valor anterior da memoria local para saber se envia para o reghist
     int queueId;
+    pid_t pid;
     
     while(exeSismon){
         reghist_info.t = registos[nSetor].t;  
@@ -54,7 +55,20 @@ void *processoSensor(void * pnSetor){
             if((registos[nSetor].t != reghist_info.t) || (registos[nSetor].h != reghist_info.h)){  
 
                 if ((queueId=mq_open(REGQ, O_RDWR)) < 0) {
-                    perror("SISMON: Erro a associar a queue REGHIST (iniciar Reghist)");
+                    perror("SISMON: Erro a associar a queue REGHIST");
+                    printf("A iniciar Reghist\n");
+
+                    if ((pid = fork()) == -1) {			// Criação do processo pai e filho
+		                printf("Erro a criar processo\n"); 
+                        exit(-1);
+	                } 
+
+                    if (pid == 0) {
+                        execl("home/controlo-estufa/src/reghist", "controlo-estufa/src/reghist", "./reghist", NULL);
+                    }
+                    else{
+                        printf("Iniciou o Reghist\n");
+                    }
                 }
                 
                 if (mq_send(queueId,(char *)&registos[nSetor], sizeof(reg_t), 0) < 0) {
