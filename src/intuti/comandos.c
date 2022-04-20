@@ -543,6 +543,9 @@ void cmd_tsm (int argc, char** argv)
 void cmd_lreg (int argc, char** argv)
 {
 	OBJECT_COMUN objectTo_reghist;
+	
+	char MSG[MAX_LINE];
+	int totalReghists=0,i;
 
 	if(argc == 1){
 		objectTo_reghist = creatComunicationObject(LREG, argc, argv);
@@ -550,6 +553,23 @@ void cmd_lreg (int argc, char** argv)
 		if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0) {
 			perror("Erro ao enviar para reghist");
 		}
+		
+		if (recvfrom(sd_intuti2,&totalReghists, sizeof(totalReghists), 0, (struct sockaddr *)&to_reghist, &to_reghistlen) < 0){
+            perror("Erro a receber do sismon");
+    	}
+		else{
+			printf("%d\n",totalReghists);
+		}
+
+		for(i=0;i<totalReghists;i++){
+			if (recvfrom(sd_intuti2, &MSG, sizeof(MSG), 0, (struct sockaddr *)&to_reghist, &to_reghistlen) < 0){
+				perror("Erro a receber do sismon");
+			}
+			else{
+				printf("%s\n",MSG);
+			}
+		}
+		
 	}
 	else {
 		printf("> Muitos argumentos\n");
@@ -565,7 +585,7 @@ void cmd_trh (int argc, char** argv)
 	if(argc == 1){
 		objectTo_reghist = creatComunicationObject(TRH, argc, argv);
 		printf("> Encerramento do processo REGHIST\n");
-		if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0) {
+		if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0){
 			perror("Erro ao enviar para reghist");
 		}
 	}

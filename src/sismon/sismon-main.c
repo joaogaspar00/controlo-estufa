@@ -137,7 +137,8 @@ void execRequestINTUTI(int execFunction, int vArguments[]){
 /*********************************************************/
 
 void sighand(){
-    exeSismon = !exeSismon;
+    closeSocketComunication(sd_sismon, SISMON);
+    exit(0);
 }
 
 /*********************************************************/

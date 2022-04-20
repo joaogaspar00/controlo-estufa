@@ -104,6 +104,10 @@ void readReghists(){
     char str[26];
     char MSG[MAX_LINE];
 
+    if (sendto(sd_reghist,&totalReghists, sizeof(totalReghists), 0 , (struct sockaddr *)&from_intutir, from_intutilenr) < 0){
+		    perror("Erro ao enviar para intuti");
+    }
+
     for(i=0;i<totalReghists;i++){
         registos=pa[i];
 
@@ -111,9 +115,20 @@ void readReghists(){
         strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S", &tm);
 
         sprintf(MSG,"%s ->Temperatura=%d e Humidade=%d do setor:%d\n",str,registos.t ,registos.h ,registos.s);
-        printf("%s",MSG);
+        
+        if (sendto(sd_reghist, MSG, sizeof(MSG), 0 , (struct sockaddr *)&from_intutir, from_intutilenr) < 0){
+		    perror("Erro ao enviar para intuti");
+        }
     }
 
+} 
+
+/*********************************************************/
+
+void sighand(){
+    closeSocketComunication(sd_reghist, REGS);
+    closeQueue(REGQ);
+    exit(0);
 }
 
 /**********************************************************/
@@ -149,6 +164,8 @@ int main (void){
     openQueues(&queueId,REGQ);
 
     openFile();
+
+    signal(SIGTERM, sighand);
 
     while(exeReghist){
         from_intutilenr = sizeof(from_intutir);
