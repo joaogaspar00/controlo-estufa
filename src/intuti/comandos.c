@@ -545,37 +545,96 @@ void cmd_lreg (int argc, char** argv)
 	OBJECT_COMUN_LREG objectTo_reghist;
 	
 	char MSG[MAX_LINE];
-	int totalReghists=0,i;
+	int totalReghists=0,i,nSetor;
+	struct tm tm;
+	char str[26];
 
-	if(argc == 2){
-		objectTo_reghist.func_number = LREG;
-		objectTo_reghist.argc = 1;
-		objectTo_reghist.argv[0]=atoi(argv[1]);
+	if(argc == 2){			// Nome do comando + Número do setor
+		nSetor = atoi(argv[1]);
+		if(nSetor <= 3 && nSetor >= 0){
+			objectTo_reghist.func_number = LREG;
+			objectTo_reghist.nSetor=nSetor;
+			objectTo_reghist.count_times = 0;		// Não foi indicada nenhuma data
 
-		printf("> Listar registos\n");
-		if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0) {
-			perror("Erro ao enviar para reghist");
-		}
-		
-		if (recvfrom(sd_intuti2,&totalReghists, sizeof(totalReghists), 0, (struct sockaddr *)&to_reghist, &to_reghistlen) < 0){
-            perror("Erro a receber do sismon");
-    	}
-		else{
-			printf("%d\n",totalReghists);
-		}
-
-		for(i=0;i<totalReghists;i++){
-			if (recvfrom(sd_intuti2, &MSG, sizeof(MSG), 0, (struct sockaddr *)&to_reghist, &to_reghistlen) < 0){
+			printf("> Listar registos\n");
+			if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0) {
+				perror("Erro ao enviar para reghist");
+			}
+			
+			if (recvfrom(sd_intuti2,&totalReghists, sizeof(totalReghists), 0, (struct sockaddr *)&to_reghist, &to_reghistlen) < 0){
 				perror("Erro a receber do sismon");
 			}
 			else{
-				printf("%s\n",MSG);
+				printf("%d\n",totalReghists);
+			}
+
+			for(i=0;i<totalReghists;i++){
+				if (recvfrom(sd_intuti2, &MSG, sizeof(MSG), 0, (struct sockaddr *)&to_reghist, &to_reghistlen) < 0){
+					perror("Erro a receber do sismon");
+				}
+				else{
+					printf("%s\n",MSG);
+				}
 			}
 		}
-		
+		else {	// Caso o argumento passado for diferente de 0 a 3
+			printf("> Erro no numero do setor [valores válidos 0-3]\n");
+		}
 	}
+
+	else if(argc == 4){			// Nome do comando + Número do setor + t1
+		nSetor = atoi(argv[1]);
+		if(nSetor <= 3 && nSetor >= 0){
+			objectTo_reghist.func_number = LREG;
+			objectTo_reghist.nSetor=nSetor;
+			objectTo_reghist.count_times = 1;			// Foi indicada a data t1
+
+			sprintf(str,"%s %s",argv[2],argv[3]);		// Junção da data e hora em apenas uma string
+			
+			strptime(str,"%d/%m/%Y %H:%M:%S\n", &tm);	// Conversão do tempo
+			objectTo_reghist.t[0] = mktime(&tm);
+
+			printf("%ld\n",objectTo_reghist.t[0]);
+
+			printf("> Listar registos\n");
+			if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0) {
+				perror("Erro ao enviar para reghist");
+			}
+		}
+		else {	// Caso o argumento passado for diferente de 0 a 3
+			printf("> Erro no numero do setor [valores válidos 0-3]\n");
+		}
+	}
+
+	else if(argc == 6){			// Nome do comando + Número do setor + t1 + t2
+		nSetor = atoi(argv[1]);
+		if(nSetor <= 3 && nSetor >= 0){
+			objectTo_reghist.func_number = LREG;
+			objectTo_reghist.nSetor=nSetor;
+			objectTo_reghist.count_times = 2;			// Foi indicada a data t1 e t2
+
+			sprintf(str,"%s %s",argv[2],argv[3]);		// Junção da data e hora em apenas uma string
+			
+			strptime(str,"%d/%m/%Y %H:%M:%S\n", &tm);	// Conversão do tempo t1
+			objectTo_reghist.t[0] = mktime(&tm);
+
+			sprintf(str,"%s %s",argv[4],argv[5]);		// Junção da data e hora em apenas uma string
+			
+			strptime(str,"%d/%m/%Y %H:%M:%S\n", &tm);	// Conversão do tempo t2
+			objectTo_reghist.t[1] = mktime(&tm);
+
+			printf("> Listar registos\n");
+			if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0) {
+				perror("Erro ao enviar para reghist");
+			}
+		}
+		else {	// Caso o argumento passado for diferente de 0 a 3
+			printf("> Erro no numero do setor [valores válidos 0-3]\n");
+		}
+	}
+
 	else {
-		printf("> Muitos argumentos\n");
+		printf("> Erro no numero de argumentos\n");
 	}
 }
 

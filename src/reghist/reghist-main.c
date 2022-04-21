@@ -97,21 +97,25 @@ void *comunSismon(){
 
 /**********************************************************/
 
-void readReghists(long int vArguments[]){
+void readReghists(int nSetor,int count_times, time_t t[2]){
     reg_t registos;
     int i;
     struct tm tm;
     char str[26];
     char MSG[MAX_LINE];
 
-    if (sendto(sd_reghist,&totalReghists, sizeof(totalReghists), 0 , (struct sockaddr *)&from_intutir, from_intutilenr) < 0){
+    if(count_times==1){
+        localtime_r(&t[0], &tm);                    // conversao do tempo 
+        strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S", &tm);       // Só serve para verificar se passou corretamente a data
+        printf("%s\n",str);                                             // Para a comparação basta apenas utilizar a variável t 
+    }
+
+    /*if (sendto(sd_reghist,&totalReghists, sizeof(totalReghists), 0 , (struct sockaddr *)&from_intutir, from_intutilenr) < 0){
 		    perror("Erro ao enviar para intuti");
     }
 
     for(i=0;i<totalReghists;i++){
         registos=pa[i];
-
-        printf("%ld\n",registos.temp.tv_sec);
 
         localtime_r(&registos.temp.tv_sec, &tm);                    // conversao do tempo 
         strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S", &tm);
@@ -121,7 +125,7 @@ void readReghists(long int vArguments[]){
         if (sendto(sd_reghist, MSG, sizeof(MSG), 0 , (struct sockaddr *)&from_intutir, from_intutilenr) < 0){
 		    perror("Erro ao enviar para intuti");
         }
-    }
+    }*/
 
 } 
 
@@ -137,11 +141,11 @@ void sighand(){
 
 /**********************************************************/
 
-void execRequestINTUTI(int execFunction, long int vArguments[]){
+void execRequestINTUTI(int execFunction,int nSetor, int count_times ,time_t *t){
     switch(execFunction){
         case LREG:
             printf("Listar registos\n");
-            readReghists(vArguments);
+            readReghists(nSetor,count_times,t);
             break;  
         case TRH:
             exeReghist = !exeReghist;
@@ -177,7 +181,7 @@ int main (void){
             perror("Erro a receber do intuti");
         }
         else{
-            execRequestINTUTI(object_reghist.func_number, object_reghist.argv);   // Executa aquilo que o intuti comandou através do número do comando e dos argumentos
+            execRequestINTUTI(object_reghist.func_number, object_reghist.nSetor,object_reghist.count_times,object_reghist.t);   // Executa aquilo que o intuti comandou através do número do comando e dos argumentos
         } 
     }
 

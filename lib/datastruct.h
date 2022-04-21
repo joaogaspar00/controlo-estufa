@@ -11,9 +11,10 @@ typedef struct object_comun{		// Estrutura que será utilizada para passar os co
 }OBJECT_COMUN;
 
 typedef struct object_comun_lreg{		// Estrutura que será utilizada para passar os comandos e argumentos pelos socket (intuti->sismon)
-	int func_number;				// Posição de cada comando
-	int argc;						// Número de argumentos
-	long int argv[ARGVECSIZE];			// Os argumentos
+	int func_number;					// Posição de cada comando
+	int nSetor;							// Número do setor
+	int count_times;					// Variável que contém a indicação se o intuti passou t1, ambos(t1 e t2) ou nenhum dos dois
+	time_t t[2];						// t1 e t2 em segundos
 }OBJECT_COMUN_LREG;
 
 typedef struct status{

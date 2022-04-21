@@ -18,7 +18,7 @@
 #define INTUTIR "/tmp/INTUTIR" 	/* nome do INTUTI (socket intuti->reghist) */
 #define REGQ "/REGQ" 			/* nome do registo historico (queue) */
 
-#define ARGVECSIZE 5		/* Número máximo de argumentos que podem ser lidos no intuti (nome do comando mais 4 argumentos)*/
+#define ARGVECSIZE 6	/* Número máximo de argumentos que podem ser lidos no intuti (nome do comando mais 4 argumentos)*/
 #define MAX_LINE  200		
 
 //defines para as janelas
