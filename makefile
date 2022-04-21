@@ -20,8 +20,8 @@ zip:
 rmexe:
 	rm -f bin/*
 rmsockets:
+	rm /tmp/REGS
 	rm /tmp/SISMON
 	rm /tmp/INTUTIR
 	rm /tmp/INTUTIS
-	rm /tmp/REGS
-
+	
