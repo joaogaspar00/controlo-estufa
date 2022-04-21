@@ -55,7 +55,7 @@ void *processoSensor(void * pnSetor){
             if((registos[nSetor].t != reghist_info.t) || (registos[nSetor].h != reghist_info.h)){  
 
                 if ((queueId=mq_open(REGQ, O_RDWR)) < 0) {
-                    perror("SISMON: Erro a associar a queue REGHIST");
+                    //perror("SISMON: Erro a associar a queue REGHIST");
                     printf("A iniciar Reghist\n");
 
                     if ((pid = fork()) == -1) {			// Criação do processo pai e filho
@@ -64,7 +64,7 @@ void *processoSensor(void * pnSetor){
 	                } 
 
                     if (pid == 0) {
-                        execl("home/controlo-estufa/src/reghist", "controlo-estufa/src/reghist", "./reghist", NULL);
+                        execl("./reghist", "reghist" ,NULL);
                     }
                     else{
                         printf("Iniciou o Reghist\n");
@@ -72,7 +72,7 @@ void *processoSensor(void * pnSetor){
                 }
                 
                 if (mq_send(queueId,(char *)&registos[nSetor], sizeof(reg_t), 0) < 0) {
-                    perror("SISMON: erro a enviar mensagem");
+                    //perror("SISMON: erro a enviar mensagem");
                 }
             }
         }

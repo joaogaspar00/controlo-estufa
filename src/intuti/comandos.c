@@ -542,13 +542,16 @@ void cmd_tsm (int argc, char** argv)
 
 void cmd_lreg (int argc, char** argv)
 {
-	OBJECT_COMUN objectTo_reghist;
+	OBJECT_COMUN_LREG objectTo_reghist;
 	
 	char MSG[MAX_LINE];
 	int totalReghists=0,i;
 
-	if(argc == 1){
-		objectTo_reghist = creatComunicationObject(LREG, argc, argv);
+	if(argc == 2){
+		objectTo_reghist.func_number = LREG;
+		objectTo_reghist.argc = 1;
+		objectTo_reghist.argv[0]=atoi(argv[1]);
+
 		printf("> Listar registos\n");
 		if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0) {
 			perror("Erro ao enviar para reghist");
@@ -580,10 +583,10 @@ void cmd_lreg (int argc, char** argv)
 
 void cmd_trh (int argc, char** argv)
 {
-	OBJECT_COMUN objectTo_reghist;
+	OBJECT_COMUN_LREG objectTo_reghist;
 
 	if(argc == 1){
-		objectTo_reghist = creatComunicationObject(TRH, argc, argv);
+		objectTo_reghist.func_number = TRH;
 		printf("> Encerramento do processo REGHIST\n");
 		if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0){
 			perror("Erro ao enviar para reghist");

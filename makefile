@@ -5,7 +5,7 @@ LDFLAGS= -lpthread -lrt
 COMUNICATIONS_FILES = ./src/procCom/*.c
 
 # Program compilation
-controlo-estufa: sismon intuti reghist
+controlo-estufa: sismon intuti reghist zip
 sismon:
 	$(CC) $(CFLAGS) ./src/sismon/*.c $(COMUNICATIONS_FILES) -o bin/sismon $(LDFLAGS)
 intuti:

@@ -10,6 +10,12 @@ typedef struct object_comun{		// Estrutura que será utilizada para passar os co
 	int argv[ARGVECSIZE];			// Os argumentos
 }OBJECT_COMUN;
 
+typedef struct object_comun_lreg{		// Estrutura que será utilizada para passar os comandos e argumentos pelos socket (intuti->sismon)
+	int func_number;				// Posição de cada comando
+	int argc;						// Número de argumentos
+	long int argv[ARGVECSIZE];			// Os argumentos
+}OBJECT_COMUN_LREG;
+
 typedef struct status{
 	int temperature;				// Temperatura do setor
 	int humidity;					// Humidade do setor

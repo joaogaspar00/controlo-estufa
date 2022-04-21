@@ -42,7 +42,7 @@ void openFile(){
         perror("Erro a criar ficheiro");
         exit(-1);
     }
-    else {
+    else{
         if (ftruncate(mfd, NREG*sizeof(reg_t)) < 0) {            /* definir tamanho do ficheiro */
             perror("Erro no ftruncate");
             exit(-1);
@@ -97,7 +97,7 @@ void *comunSismon(){
 
 /**********************************************************/
 
-void readReghists(){
+void readReghists(long int vArguments[]){
     reg_t registos;
     int i;
     struct tm tm;
@@ -110,6 +110,8 @@ void readReghists(){
 
     for(i=0;i<totalReghists;i++){
         registos=pa[i];
+
+        printf("%ld\n",registos.temp.tv_sec);
 
         localtime_r(&registos.temp.tv_sec, &tm);                    // conversao do tempo 
         strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S", &tm);
@@ -128,16 +130,18 @@ void readReghists(){
 void sighand(){
     closeSocketComunication(sd_reghist, REGS);
     closeQueue(REGQ);
+    munmap(pa,NREG*sizeof(reg_t));       
+    close(mfd);
     exit(0);
 }
 
 /**********************************************************/
 
-void execRequestINTUTI(int execFunction, int vArguments[]){
+void execRequestINTUTI(int execFunction, long int vArguments[]){
     switch(execFunction){
         case LREG:
             printf("Listar registos\n");
-            readReghists();
+            readReghists(vArguments);
             break;  
         case TRH:
             exeReghist = !exeReghist;
@@ -151,7 +155,7 @@ void execRequestINTUTI(int execFunction, int vArguments[]){
 /**********************************************************/
 
 int main (void){
-    OBJECT_COMUN object_reghist;        // Estutura que serve para a comunicação entre Intuti e Sismon
+    OBJECT_COMUN_LREG object_reghist;        // Estutura que serve para a comunicação entre Intuti e Sismon
     pthread_t  thread;
 
     iniSocketServer(&sd_reghist, REGS);    // inicializa a socket para comunicação entre sismon e intuti
