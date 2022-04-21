@@ -13,6 +13,9 @@ intuti:
 reghist:
 	$(CC) $(CFLAGS) ./src/reghist/*.c $(COMUNICATIONS_FILES) -o bin/reghist $(LDFLAGS)
 
+# Zip create
+zip:
+	zip -r ../projeto.zip .
 # Files cleaning
 rmexe:
 	rm -f bin/*
