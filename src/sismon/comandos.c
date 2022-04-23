@@ -27,13 +27,19 @@ extern bool reghistOpen;    //indica se a opcao de envio para o reghist esta ati
 /**********************************************************/
 void temphumRequest(int nSetor){        //cth
     char MSG[MAX_LINE];
+    struct tm tm;
+    char str[26];
 
     if (nSetor==0){     // Se o argumento for 0 teremos que consultar todos os setores e enviar para o intuti
-        sprintf(MSG,">Setor 1 -> Temp=%d e Hum=%d \n>Setor 2 -> Temp=%d e Hum=%d \n>Setor 3 -> Temp=%d e Hum=%d \n",
-                registos[0].t,registos[0].h,registos[1].t,registos[2].h,registos[2].t,registos[2].h);
+        localtime_r(&registos[0].temp.tv_sec, &tm);                    // conversao do tempo 
+        strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S", &tm);
+        sprintf(MSG,">Data:%s \n>Setor 1 -> Temp=%d e Hum=%d \n>Setor 2 -> Temp=%d e Hum=%d \n>Setor 3 -> Temp=%d e Hum=%d \n",
+                str,registos[0].t,registos[0].h,registos[1].t,registos[2].h,registos[2].t,registos[2].h);
     }
     else{
-        sprintf(MSG,">Setor %d -> Temp=%d e Hum=%d \n",nSetor,registos[nSetor-1].t,registos[nSetor-1].h);
+        localtime_r(&registos[nSetor-1].temp.tv_sec, &tm);                    // conversao do tempo 
+        strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S", &tm);
+        sprintf(MSG,">Data:%s \n>Setor %d -> Temp=%d e Hum=%d \n",str,nSetor,registos[nSetor-1].t,registos[nSetor-1].h);
     }
 
     if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
@@ -245,7 +251,6 @@ void consultReghistStatus(){    //cer
     if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
 		perror("Erro ao enviar para intuti");
     }
-
 }
 
 /**********************************************************/
@@ -269,5 +274,4 @@ void changeReghistStatus(int order){    //aer e der
     if (sendto(sd_sismon, MSG, sizeof(MSG), 0, (struct sockaddr *)&from_intuti, from_intutilen) < 0){
 		perror("Erro ao enviar para intuti");
     }
-
 }

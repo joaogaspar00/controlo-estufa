@@ -138,7 +138,7 @@ void cmd_cp (int argc, char** argv){
     		}
 			else{
 				printf("%s \n",MSG);
-				printf("Janelas (1-Fechado -1-Aberto) Rega (1-Ligado -1-Desligado)\n");
+				printf(" Janelas (1-Fechado -1-Aberto) Rega (1-Ligado -1-Desligado) \n");
 			}
 		}
 		else {	// Caso o argumento passado for diferente de 0 a 3
@@ -434,7 +434,7 @@ void cmd_dala (int argc, char** argv)
 		}
 	}
 	else {
-		printf("> Muitos argumentos\n");
+		printf("> Erro no numero de argumentos\n");
 	}
 }
 
@@ -540,7 +540,7 @@ void cmd_tsm (int argc, char** argv)
 
 /***********************************************************************/
 
-void recvFromReg(){
+void recvFromReg(){			// Função que recebe o contéudo do ficheiro dos registos
 	char MSG[MAX_LINE];
 
 	while(1){
@@ -554,7 +554,6 @@ void recvFromReg(){
 			printf("%s",MSG);
 		}
 	}
-
 }
 
 /***********************************************************************/
@@ -671,7 +670,7 @@ void cmd_trh (int argc, char** argv)
 
 void cmd_sos (int argc, char **argv)
 {
-  int i;
+  	int i;
 
 	if(argc == 1){
 		printf("%s\n", titleMSG);

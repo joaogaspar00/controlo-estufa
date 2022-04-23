@@ -43,7 +43,7 @@ void openFile(){
         exit(-1);
     }
     else{
-        if (ftruncate(mfd, NREG*sizeof(reg_t)) < 0) {            /* definir tamanho do ficheiro */
+        if (ftruncate(mfd, NREG*sizeof(reg_t)) < 0) {     /* definir tamanho do ficheiro */
             perror("Erro no ftruncate");
             exit(-1);
         }
@@ -205,6 +205,5 @@ int main (void){
            
     closeQueue(REGQ);
     
-
     return 0;
 }
