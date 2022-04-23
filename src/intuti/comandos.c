@@ -540,12 +540,30 @@ void cmd_tsm (int argc, char** argv)
 
 /***********************************************************************/
 
+void recvFromReg(){
+	char MSG[MAX_LINE];
+
+	while(1){
+		if (recvfrom(sd_intuti2, &MSG, sizeof(MSG), 0, (struct sockaddr *)&to_reghist, &to_reghistlen) < 0){
+			perror("Erro a receber do sismon");
+		}
+		else{
+			if(strcmp(MSG,"Terminei!\n")==0){
+				break;
+			}
+			printf("%s",MSG);
+		}
+	}
+
+}
+
+/***********************************************************************/
+
 void cmd_lreg (int argc, char** argv)
 {
 	OBJECT_COMUN_LREG objectTo_reghist;
-	
-	char MSG[MAX_LINE];
-	int totalReghists=0,i,nSetor;
+
+	int nSetor;
 	struct tm tm;
 	char str[26];
 
@@ -560,22 +578,8 @@ void cmd_lreg (int argc, char** argv)
 			if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0) {
 				perror("Erro ao enviar para reghist");
 			}
-			
-			if (recvfrom(sd_intuti2,&totalReghists, sizeof(totalReghists), 0, (struct sockaddr *)&to_reghist, &to_reghistlen) < 0){
-				perror("Erro a receber do sismon");
-			}
-			else{
-				printf("%d\n",totalReghists);
-			}
 
-			for(i=0;i<totalReghists;i++){
-				if (recvfrom(sd_intuti2, &MSG, sizeof(MSG), 0, (struct sockaddr *)&to_reghist, &to_reghistlen) < 0){
-					perror("Erro a receber do sismon");
-				}
-				else{
-					printf("%s\n",MSG);
-				}
-			}
+			recvFromReg();
 		}
 		else {	// Caso o argumento passado for diferente de 0 a 3
 			printf("> Erro no numero do setor [valores válidos 0-3]\n");
@@ -591,7 +595,8 @@ void cmd_lreg (int argc, char** argv)
 
 			sprintf(str,"%s %s",argv[2],argv[3]);		// Junção da data e hora em apenas uma string
 			
-			strptime(str,"%d/%m/%Y %H:%M:%S\n", &tm);	// Conversão do tempo
+			tm.tm_isdst = 1;							// Conversão do tempo
+			strptime(str,"%d/%m/%Y %H:%M:%S\n", &tm);	
 			objectTo_reghist.t[0] = mktime(&tm);
 
 			printf("%ld\n",objectTo_reghist.t[0]);
@@ -600,6 +605,8 @@ void cmd_lreg (int argc, char** argv)
 			if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0) {
 				perror("Erro ao enviar para reghist");
 			}
+
+			recvFromReg();
 		}
 		else {	// Caso o argumento passado for diferente de 0 a 3
 			printf("> Erro no numero do setor [valores válidos 0-3]\n");
@@ -612,21 +619,25 @@ void cmd_lreg (int argc, char** argv)
 			objectTo_reghist.func_number = LREG;
 			objectTo_reghist.nSetor=nSetor;
 			objectTo_reghist.count_times = 2;			// Foi indicada a data t1 e t2
-
+			
 			sprintf(str,"%s %s",argv[2],argv[3]);		// Junção da data e hora em apenas uma string
 			
-			strptime(str,"%d/%m/%Y %H:%M:%S\n", &tm);	// Conversão do tempo t1
+			tm.tm_isdst = 1;							// Conversão do tempo t1
+			strptime(str,"%d/%m/%Y %H:%M:%S\n", &tm);	
 			objectTo_reghist.t[0] = mktime(&tm);
 
 			sprintf(str,"%s %s",argv[4],argv[5]);		// Junção da data e hora em apenas uma string
 			
-			strptime(str,"%d/%m/%Y %H:%M:%S\n", &tm);	// Conversão do tempo t2
+			tm.tm_isdst = 1;							// Conversão do tempo t2
+			strptime(str,"%d/%m/%Y %H:%M:%S\n", &tm);	
 			objectTo_reghist.t[1] = mktime(&tm);
 
 			printf("> Listar registos\n");
 			if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0) {
 				perror("Erro ao enviar para reghist");
 			}
+
+			recvFromReg();
 		}
 		else {	// Caso o argumento passado for diferente de 0 a 3
 			printf("> Erro no numero do setor [valores válidos 0-3]\n");

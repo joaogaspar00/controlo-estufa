@@ -102,7 +102,7 @@ void execRequestINTUTI(int execFunction, int vArguments[]){
             modifySensorPer(vArguments[0],vArguments[1]);  
             break;
         case MPA:   //mpa
-            printf("> Modificar o Periodo do sensor: %d\n", vArguments[0]);
+            printf("> Modificar o Periodo do ambiente: %d\n", vArguments[0]);
             modifySensorAmb(vArguments[0],vArguments[1]);  
             break;
         case CALA:   //cala

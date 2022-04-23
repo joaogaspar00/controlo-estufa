@@ -97,36 +97,50 @@ void *comunSismon(){
 
 /**********************************************************/
 
-void readReghists(int nSetor,int count_times, time_t t[2]){
-    reg_t registos;
-    int i;
+void sendToIntuti(reg_t registos){
     struct tm tm;
     char str[26];
     char MSG[MAX_LINE];
 
-    if(count_times==1){
-        localtime_r(&t[0], &tm);                    // conversao do tempo 
-        strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S", &tm);       // Só serve para verificar se passou corretamente a data
-        printf("%s\n",str);                                             // Para a comparação basta apenas utilizar a variável t 
-    }
+    localtime_r(&registos.temp.tv_sec, &tm);                    // conversao do tempo 
+    strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S", &tm);
 
-    /*if (sendto(sd_reghist,&totalReghists, sizeof(totalReghists), 0 , (struct sockaddr *)&from_intutir, from_intutilenr) < 0){
-		    perror("Erro ao enviar para intuti");
+    sprintf(MSG,"%s ->Temperatura=%d e Humidade=%d do setor:%d\n",str,registos.t ,registos.h ,registos.s); 
+    
+    if (sendto(sd_reghist, MSG, sizeof(MSG), 0 , (struct sockaddr *)&from_intutir, from_intutilenr) < 0){
+        perror("Erro ao enviar para intuti");
     }
+}
+
+/**********************************************************/
+
+void readReghists(int nSetor,int count_times, time_t t[2]){
+    reg_t registos;
+    int i;
+    char MSG[MAX_LINE];
 
     for(i=0;i<totalReghists;i++){
         registos=pa[i];
-
-        localtime_r(&registos.temp.tv_sec, &tm);                    // conversao do tempo 
-        strftime(&str[0], sizeof(str), "%d/%m/%Y %H:%M:%S", &tm);
-
-        sprintf(MSG,"%s ->Temperatura=%d e Humidade=%d do setor:%d\n",str,registos.t ,registos.h ,registos.s);
         
-        if (sendto(sd_reghist, MSG, sizeof(MSG), 0 , (struct sockaddr *)&from_intutir, from_intutilenr) < 0){
-		    perror("Erro ao enviar para intuti");
+        if((registos.s!=nSetor) && (nSetor!=0)){
+            continue;
         }
-    }*/
 
+        if((count_times==1) && (difftime(registos.temp.tv_sec,t[0])<0)){
+            continue;
+        }
+
+        if((count_times==2) && (difftime(registos.temp.tv_sec,t[1])>0)){
+            continue;
+        }
+
+        sendToIntuti(registos);
+    }
+
+    sprintf(MSG,"Terminei!\n");
+    if (sendto(sd_reghist, MSG, sizeof(MSG), 0 , (struct sockaddr *)&from_intutir, from_intutilenr) < 0){
+        perror("Erro ao enviar para intuti");
+    }
 } 
 
 /*********************************************************/
@@ -164,14 +178,14 @@ int main (void){
 
     iniSocketServer(&sd_reghist, REGS);    // inicializa a socket para comunicação entre sismon e intuti
 
+    openQueues(&queueId,REGQ);
+
+    openFile();
+
     if (pthread_create(&thread, NULL, comunSismon,NULL) != 0) {
         printf("Erro a criar thread\n");
         exit(-1);
     }
-
-    openQueues(&queueId,REGQ);
-
-    openFile();
 
     signal(SIGTERM, sighand);
 
