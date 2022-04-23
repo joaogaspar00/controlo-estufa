@@ -126,11 +126,11 @@ void readReghists(int nSetor,int count_times, time_t t[2]){
             continue;
         }
 
-        if((count_times==1) && (difftime(registos.temp.tv_sec,t[0])<0)){
+        if((count_times>0) && (difftime(registos.temp.tv_sec,t[0])<0)){
             continue;
         }
 
-        if((count_times==2) && (difftime(registos.temp.tv_sec,t[1])>0)){
+        if((count_times>1) && (difftime(registos.temp.tv_sec,t[1])>0)){
             continue;
         }
 

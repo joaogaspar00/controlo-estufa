@@ -598,8 +598,6 @@ void cmd_lreg (int argc, char** argv)
 			strptime(str,"%d/%m/%Y %H:%M:%S\n", &tm);	
 			objectTo_reghist.t[0] = mktime(&tm);
 
-			printf("%ld\n",objectTo_reghist.t[0]);
-
 			printf("> Listar registos\n");
 			if (sendto(sd_intuti2, &objectTo_reghist, sizeof(objectTo_reghist), 0, (struct sockaddr *)&to_reghist, to_reghistlen) < 0) {
 				perror("Erro ao enviar para reghist");
